@@ -1,62 +1,81 @@
 import { useEffect, useState, useRef } from 'react';
-
+import { MessageAnalyzer } from './components/MessageAnalyzer';
 import { AudioVisualizer } from './components/AudioVisualizer';
 import Progress from './components/Progress';
 import { LanguageSelector } from './components/LanguageSelector';
 
 const IS_WEBGPU_AVAILABLE = !!navigator.gpu;
-
 const WHISPER_SAMPLING_RATE = 16_000;
 const MAX_AUDIO_LENGTH = 30; // seconds
 const MAX_SAMPLES = WHISPER_SAMPLING_RATE * MAX_AUDIO_LENGTH;
 
 function App() {
-  // Create a reference to the worker object.
   const worker = useRef(null);
-
   const recorderRef = useRef(null);
-
-  // Model loading and progress
   const [status, setStatus] = useState(null);
   const [loadingMessage, setLoadingMessage] = useState('');
   const [progressItems, setProgressItems] = useState([]);
-
-  // Inputs and outputs
   const [text, setText] = useState('');
   const [tps, setTps] = useState(null);
   const [language, setLanguage] = useState('en');
-
-  // Processing
   const [recording, setRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [chunks, setChunks] = useState([]);
   const [stream, setStream] = useState(null);
   const audioContextRef = useRef(null);
+  const [analyzedText, setAnalyzedText] = useState('');
 
-  // We use the `useEffect` hook to setup the worker as soon as the `App` component is mounted.
+  let intervalId; // Declare intervalId here
+
+  useEffect(() => {
+    intervalId = setInterval(() => {
+      if (status === 'ready') {
+        setAnalyzedText(text); // Update the text to be analyzed
+      }
+    }, 10000);
+
+    return () => clearInterval(intervalId); // Cleanup on unmount
+  }, [status, text]);
+
+  useEffect(() => {
+    const fetchAnalysis = async () => {
+      if (text) {
+        console.log('Sending analysis request for message:', text);
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ message: text }),
+        });
+
+        const data = await response.json();
+        console.log('Received analysis:', data);
+        // Assuming you have a state for analysis result
+        // setAnalysis(data.result);
+      }
+    };
+
+    fetchAnalysis();
+  }, [text]);
+
   useEffect(() => {
     if (!worker.current) {
-      // Create the worker if it does not yet exist.
       worker.current = new Worker(new URL('./worker.js', import.meta.url), {
         type: 'module',
       });
     }
 
-    // Create a callback function for messages from the worker thread.
     const onMessageReceived = e => {
       switch (e.data.status) {
         case 'loading':
-          // Model file start load: add a new progress item to the list.
           setStatus('loading');
           setLoadingMessage(e.data.data);
           break;
-
         case 'initiate':
           setProgressItems(prev => [...prev, e.data]);
           break;
-
         case 'progress':
-          // Model file progress: update one of the progress items.
           setProgressItems(prev =>
             prev.map(item => {
               if (item.file === e.data.file) {
@@ -66,62 +85,45 @@ function App() {
             })
           );
           break;
-
         case 'done':
-          // Model file loaded: remove the progress item from the list.
           setProgressItems(prev => prev.filter(item => item.file !== e.data.file));
           break;
-
         case 'ready':
-          // Pipeline ready: the worker is ready to accept messages.
           setStatus('ready');
           recorderRef.current?.start();
           break;
-
         case 'start':
-          {
-            // Start generation
-            setIsProcessing(true);
-
-            // Request new data from the recorder
-            recorderRef.current?.requestData();
-          }
+          setIsProcessing(true);
+          recorderRef.current?.requestData();
           break;
-
         case 'update':
-          {
-            // Generation update: update the output text.
-            const { tps } = e.data;
-            setTps(tps);
-          }
+          const { tps } = e.data;
+          setTps(tps);
           break;
-
         case 'complete':
-          // Generation complete: re-enable the "Generate" button
           setIsProcessing(false);
           setText(e.data.output);
           break;
       }
     };
 
-    // Attach the callback function as an event listener.
     worker.current.addEventListener('message', onMessageReceived);
 
-    // Define a cleanup function for when the component is unmounted.
     return () => {
+      worker.current?.terminate();
+      clearInterval(intervalId); // Clear the interval here
       worker.current.removeEventListener('message', onMessageReceived);
     };
-  }, []);
+  }, [status, text]);
 
   useEffect(() => {
-    if (recorderRef.current) return; // Already set
+    if (!recorderRef.current) return; // Already set
 
     if (navigator.mediaDevices.getUserMedia) {
       navigator.mediaDevices
         .getUserMedia({ audio: true })
         .then(stream => {
           setStream(stream);
-
           recorderRef.current = new MediaRecorder(stream);
           audioContextRef.current = new AudioContext({ sampleRate: WHISPER_SAMPLING_RATE });
 
@@ -133,7 +135,6 @@ function App() {
             if (e.data.size > 0) {
               setChunks(prev => [...prev, e.data]);
             } else {
-              // Empty chunk received, so we request new data after a short timeout
               setTimeout(() => {
                 recorderRef.current.requestData();
               }, 25);
@@ -156,15 +157,10 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!recorderRef.current) return;
-    if (!recording) return;
-    if (isProcessing) return;
-    if (status !== 'ready') return;
+    if (!recorderRef.current || !recording || isProcessing || status !== 'ready') return;
 
     if (chunks.length > 0) {
-      // Generate from data
       const blob = new Blob(chunks, { type: recorderRef.current.mimeType });
-
       const fileReader = new FileReader();
 
       fileReader.onloadend = async () => {
@@ -172,10 +168,8 @@ function App() {
         const decoded = await audioContextRef.current.decodeAudioData(arrayBuffer);
         let audio = decoded.getChannelData(0);
         if (audio.length > MAX_SAMPLES) {
-          // Get last MAX_SAMPLES
           audio = audio.slice(-MAX_SAMPLES);
         }
-
         worker.current.postMessage({ type: 'generate', data: { audio, language } });
       };
       fileReader.readAsArrayBuffer(blob);
@@ -198,7 +192,7 @@ function App() {
     <div className="flex flex-col h-screen mx-auto justify-end text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-900">
       <div className="h-full overflow-auto scrollbar-thin flex justify-center items-center flex-col relative">
         <div className="flex flex-col items-center mb-6 max-w-[400px] text-center">
-          <img src="logo.png" width="50%" height="auto" className="block mb-4"></img>
+          <img src="logo.png" width="50%" height="auto" className="block mb-4" alt="Logo" />
           <h1 className="text-4xl font-bold mb-2">ClearCall</h1>
           <h2 className="text-xl font-semibold">Real-time in-browser speech recognition</h2>
         </div>
@@ -283,6 +277,7 @@ function App() {
               </button>
             </div>
           )}
+          {status === 'ready' && analyzedText && <MessageAnalyzer message={analyzedText} />}
           {status === 'loading' && (
             <div className="w-full max-w-[500px] mx-auto p-6">
               <p className="text-center mb-4">{loadingMessage}</p>
