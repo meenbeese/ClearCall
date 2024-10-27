@@ -196,104 +196,102 @@ function App() {
 
   return (
     <div className="flex flex-col h-screen mx-auto justify-end text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-900">
-      {
-        <div className="h-full overflow-auto scrollbar-thin flex justify-center items-center flex-col relative">
-          <div className="flex flex-col items-center mb-1 max-w-[400px] text-center">
-            <img src="logo.png" width="50%" height="auto" className="block"></img>
-            <h1 className="text-4xl font-bold mb-1 mt-2">VeriVoice</h1>
-            <h2 className="text-xl font-semibold">Real-time in-browser speech recognition</h2>
-          </div>
-
-          <div className="flex flex-col items-center px-4">
-            {status === null && (
-              <>
-                <p className="max-w-[480px] mb-4">
-                  <br />
-                  You are about to load{' '}
-                  <a
-                    href="https://huggingface.co/onnx-community/whisper-base"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="font-medium underline"
-                  >
-                    whisper-base
-                  </a>
-                  , a 73 million parameter speech recognition model that is optimized for inference
-                  on the web. Once downloaded, the model (~200&nbsp;MB) will be cached and reused
-                  when you revisit the page.
-                  <br />
-                  <br />
-                  Everything runs directly in your browser using{' '}
-                  <a
-                    href="https://huggingface.co/docs/transformers.js"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="underline"
-                  >
-                    🤗&nbsp;Transformers.js
-                  </a>{' '}
-                  and ONNX Runtime Web, meaning no data is sent to a server. You can even disconnect
-                  from the internet after the model has loaded!
-                </p>
-
-                <button
-                  className="border px-4 py-2 rounded-lg bg-blue-400 text-white hover:bg-blue-500 disabled:bg-blue-100 disabled:cursor-not-allowed select-none"
-                  onClick={() => {
-                    worker.current.postMessage({ type: 'load' });
-                    setStatus('loading');
-                  }}
-                  disabled={status !== null}
-                >
-                  Load model
-                </button>
-              </>
-            )}
-
-            <div className="w-[500px] p-2">
-              <AudioVisualizer className="w-full rounded-lg" stream={stream} />
-              {status === 'ready' && (
-                <div className="relative">
-                  <p className="w-full h-[80px] overflow-y-auto overflow-wrap-anywhere border rounded-lg p-2">
-                    {text}
-                  </p>
-                  {tps && (
-                    <span className="absolute bottom-0 right-0 px-1">{tps.toFixed(2)} tok/s</span>
-                  )}
-                </div>
-              )}
-            </div>
-            {status === 'ready' && (
-              <div className="relative w-full flex justify-center">
-                <LanguageSelector
-                  language={language}
-                  setLanguage={e => {
-                    recorderRef.current?.stop();
-                    setLanguage(e);
-                    recorderRef.current?.start();
-                  }}
-                />
-                <button
-                  className="border rounded-lg px-2 absolute right-2"
-                  onClick={() => {
-                    recorderRef.current?.stop();
-                    recorderRef.current?.start();
-                  }}
-                >
-                  Reset
-                </button>
-              </div>
-            )}
-            {status === 'loading' && (
-              <div className="w-full max-w-[500px] text-left mx-auto p-4">
-                <p className="text-center">{loadingMessage}</p>
-                {progressItems.map(({ file, progress, total }, i) => (
-                  <Progress key={i} text={file} percentage={progress} total={total} />
-                ))}
-              </div>
-            )}
-          </div>
+      <div className="h-full overflow-auto scrollbar-thin flex justify-center items-center flex-col relative">
+        <div className="flex flex-col items-center mb-6 max-w-[400px] text-center">
+          <img src="logo.png" width="50%" height="auto" className="block mb-4"></img>
+          <h1 className="text-4xl font-bold mb-2">VeriVoice</h1>
+          <h2 className="text-xl font-semibold">Real-time in-browser speech recognition</h2>
         </div>
-      }
+
+        <div className="flex flex-col items-center px-6 w-full max-w-[500px]">
+          {status === null && (
+            <>
+              <p className="max-w-[480px] mb-6">
+                <br />
+                You are about to load{' '}
+                <a
+                  href="https://huggingface.co/onnx-community/whisper-base"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-medium underline"
+                >
+                  whisper-base
+                </a>
+                , a 73 million parameter speech recognition model that is optimized for inference on
+                the web. Once downloaded, the model (~200&nbsp;MB) will be cached and reused when
+                you revisit the page.
+                <br />
+                <br />
+                Everything runs directly in your browser using{' '}
+                <a
+                  href="https://huggingface.co/docs/transformers.js"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline"
+                >
+                  🤗&nbsp;Transformers.js
+                </a>{' '}
+                and ONNX Runtime Web, meaning no data is sent to a server. You can even disconnect
+                from the internet after the model has loaded!
+              </p>
+
+              <button
+                className="border px-6 py-2 rounded-lg bg-blue-400 text-white hover:bg-blue-500 disabled:bg-blue-100 disabled:cursor-not-allowed select-none mb-6"
+                onClick={() => {
+                  worker.current.postMessage({ type: 'load' });
+                  setStatus('loading');
+                }}
+                disabled={status !== null}
+              >
+                Load model
+              </button>
+            </>
+          )}
+
+          <div className="w-full p-4">
+            <AudioVisualizer className="w-full rounded-lg mb-4" stream={stream} />
+            {status === 'ready' && (
+              <div className="relative mb-4">
+                <p className="w-full h-[80px] overflow-y-auto overflow-wrap-anywhere border rounded-lg p-3">
+                  {text}
+                </p>
+                {tps && (
+                  <span className="absolute bottom-2 right-2 px-2">{tps.toFixed(2)} tok/s</span>
+                )}
+              </div>
+            )}
+          </div>
+          {status === 'ready' && (
+            <div className="relative w-full flex px-4 mb-6 absolute left-2">
+              <LanguageSelector
+                language={language}
+                setLanguage={e => {
+                  recorderRef.current?.stop();
+                  setLanguage(e);
+                  recorderRef.current?.start();
+                }}
+              />
+              <button
+                className="border rounded-lg px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 absolute right-2"
+                onClick={() => {
+                  recorderRef.current?.stop();
+                  recorderRef.current?.start();
+                }}
+              >
+                Reset
+              </button>
+            </div>
+          )}
+          {status === 'loading' && (
+            <div className="w-full max-w-[500px] mx-auto p-6">
+              <p className="text-center mb-4">{loadingMessage}</p>
+              {progressItems.map(({ file, progress, total }, i) => (
+                <Progress key={i} text={file} percentage={progress} total={total} />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
