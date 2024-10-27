@@ -4,7 +4,7 @@ import {
   WhisperForConditionalGeneration,
   TextStreamer,
   full,
-} from "@huggingface/transformers";
+} from '@huggingface/transformers';
 
 const MAX_NEW_TOKENS = 64;
 
@@ -18,7 +18,7 @@ class AutomaticSpeechRecognitionPipeline {
   static model = null;
 
   static async getInstance(progress_callback = null) {
-    this.model_id = "onnx-community/whisper-base";
+    this.model_id = 'onnx-community/whisper-base';
 
     this.tokenizer ??= AutoTokenizer.from_pretrained(this.model_id, {
       progress_callback,
@@ -27,17 +27,14 @@ class AutomaticSpeechRecognitionPipeline {
       progress_callback,
     });
 
-    this.model ??= WhisperForConditionalGeneration.from_pretrained(
-      this.model_id,
-      {
-        dtype: {
-          encoder_model: "fp32", // 'fp16' works too
-          decoder_model_merged: "q4", // or 'fp32' ('fp16' is broken)
-        },
-        device: "webgpu",
-        progress_callback,
+    this.model ??= WhisperForConditionalGeneration.from_pretrained(this.model_id, {
+      dtype: {
+        encoder_model: 'fp32', // 'fp16' works too
+        decoder_model_merged: 'q4', // or 'fp32' ('fp16' is broken)
       },
-    );
+      device: 'webgpu',
+      progress_callback,
+    });
 
     return Promise.all([this.tokenizer, this.processor, this.model]);
   }
@@ -49,15 +46,14 @@ async function generate({ audio, language }) {
   processing = true;
 
   // Tell the main thread we are starting
-  self.postMessage({ status: "start" });
+  self.postMessage({ status: 'start' });
 
   // Retrieve the text-generation pipeline.
-  const [tokenizer, processor, model] =
-    await AutomaticSpeechRecognitionPipeline.getInstance();
+  const [tokenizer, processor, model] = await AutomaticSpeechRecognitionPipeline.getInstance();
 
   let startTime;
   let numTokens = 0;
-  const callback_function = (output) => {
+  const callback_function = output => {
     startTime ??= performance.now();
 
     let tps;
@@ -65,7 +61,7 @@ async function generate({ audio, language }) {
       tps = (numTokens / (performance.now() - startTime)) * 1000;
     }
     self.postMessage({
-      status: "update",
+      status: 'update',
       output,
       tps,
       numTokens,
@@ -93,7 +89,7 @@ async function generate({ audio, language }) {
 
   // Send the output back to the main thread
   self.postMessage({
-    status: "complete",
+    status: 'complete',
     output: outputText,
   });
   processing = false;
@@ -101,21 +97,20 @@ async function generate({ audio, language }) {
 
 async function load() {
   self.postMessage({
-    status: "loading",
-    data: "Loading model...",
+    status: 'loading',
+    data: 'Loading model...',
   });
 
   // Load the pipeline and save it for future use.
-  const [tokenizer, processor, model] =
-    await AutomaticSpeechRecognitionPipeline.getInstance((x) => {
-      // We also add a progress callback to the pipeline so that we can
-      // track model loading.
-      self.postMessage(x);
-    });
+  const [tokenizer, processor, model] = await AutomaticSpeechRecognitionPipeline.getInstance(x => {
+    // We also add a progress callback to the pipeline so that we can
+    // track model loading.
+    self.postMessage(x);
+  });
 
   self.postMessage({
-    status: "loading",
-    data: "Compiling shaders and warming up model...",
+    status: 'loading',
+    data: 'Compiling shaders and warming up model...',
   });
 
   // Run model with dummy input to compile shaders
@@ -123,18 +118,18 @@ async function load() {
     input_features: full([1, 80, 3000], 0.0),
     max_new_tokens: 1,
   });
-  self.postMessage({ status: "ready" });
+  self.postMessage({ status: 'ready' });
 }
 // Listen for messages from the main thread
-self.addEventListener("message", async (e) => {
+self.addEventListener('message', async e => {
   const { type, data } = e.data;
 
   switch (type) {
-    case "load":
+    case 'load':
       load();
       break;
 
-    case "generate":
+    case 'generate':
       generate(data);
       break;
   }

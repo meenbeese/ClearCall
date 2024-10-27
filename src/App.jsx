@@ -1,8 +1,8 @@
-import { useEffect, useState, useRef } from "react";
-import TextAnalyzer from "./components/TextAnalyzer";
-import { AudioVisualizer } from "./components/AudioVisualizer";
-import Progress from "./components/Progress";
-import { LanguageSelector } from "./components/LanguageSelector";
+import { useEffect, useState, useRef } from 'react';
+import TextAnalyzer from './components/TextAnalyzer';
+import { AudioVisualizer } from './components/AudioVisualizer';
+import Progress from './components/Progress';
+import { LanguageSelector } from './components/LanguageSelector';
 
 const IS_WEBGPU_AVAILABLE = !!navigator.gpu;
 
@@ -18,13 +18,13 @@ function App() {
 
   // Model loading and progress
   const [status, setStatus] = useState(null);
-  const [loadingMessage, setLoadingMessage] = useState("");
+  const [loadingMessage, setLoadingMessage] = useState('');
   const [progressItems, setProgressItems] = useState([]);
 
   // Inputs and outputs
-  const [text, setText] = useState("");
+  const [text, setText] = useState('');
   const [tps, setTps] = useState(null);
-  const [language, setLanguage] = useState("en");
+  const [language, setLanguage] = useState('en');
 
   // Processing
   const [recording, setRecording] = useState(false);
@@ -37,50 +37,48 @@ function App() {
   useEffect(() => {
     if (!worker.current) {
       // Create the worker if it does not yet exist.
-      worker.current = new Worker(new URL("./worker.js", import.meta.url), {
-        type: "module",
+      worker.current = new Worker(new URL('./worker.js', import.meta.url), {
+        type: 'module',
       });
     }
 
     // Create a callback function for messages from the worker thread.
-    const onMessageReceived = (e) => {
+    const onMessageReceived = e => {
       switch (e.data.status) {
-        case "loading":
+        case 'loading':
           // Model file start load: add a new progress item to the list.
-          setStatus("loading");
+          setStatus('loading');
           setLoadingMessage(e.data.data);
           break;
 
-        case "initiate":
-          setProgressItems((prev) => [...prev, e.data]);
+        case 'initiate':
+          setProgressItems(prev => [...prev, e.data]);
           break;
 
-        case "progress":
+        case 'progress':
           // Model file progress: update one of the progress items.
-          setProgressItems((prev) =>
-            prev.map((item) => {
+          setProgressItems(prev =>
+            prev.map(item => {
               if (item.file === e.data.file) {
                 return { ...item, ...e.data };
               }
               return item;
-            }),
+            })
           );
           break;
 
-        case "done":
+        case 'done':
           // Model file loaded: remove the progress item from the list.
-          setProgressItems((prev) =>
-            prev.filter((item) => item.file !== e.data.file),
-          );
+          setProgressItems(prev => prev.filter(item => item.file !== e.data.file));
           break;
 
-        case "ready":
+        case 'ready':
           // Pipeline ready: the worker is ready to accept messages.
-          setStatus("ready");
+          setStatus('ready');
           recorderRef.current?.start();
           break;
 
-        case "start":
+        case 'start':
           {
             // Start generation
             setIsProcessing(true);
@@ -90,7 +88,7 @@ function App() {
           }
           break;
 
-        case "update":
+        case 'update':
           {
             // Generation update: update the output text.
             const { tps } = e.data;
@@ -98,7 +96,7 @@ function App() {
           }
           break;
 
-        case "complete":
+        case 'complete':
           // Generation complete: re-enable the "Generate" button
           setIsProcessing(false);
           setText(e.data.output);
@@ -107,11 +105,11 @@ function App() {
     };
 
     // Attach the callback function as an event listener.
-    worker.current.addEventListener("message", onMessageReceived);
+    worker.current.addEventListener('message', onMessageReceived);
 
     // Define a cleanup function for when the component is unmounted.
     return () => {
-      worker.current.removeEventListener("message", onMessageReceived);
+      worker.current.removeEventListener('message', onMessageReceived);
     };
   }, []);
 
@@ -121,7 +119,7 @@ function App() {
     if (navigator.mediaDevices.getUserMedia) {
       navigator.mediaDevices
         .getUserMedia({ audio: true })
-        .then((stream) => {
+        .then(stream => {
           setStream(stream);
 
           recorderRef.current = new MediaRecorder(stream);
@@ -133,9 +131,9 @@ function App() {
             setRecording(true);
             setChunks([]);
           };
-          recorderRef.current.ondataavailable = (e) => {
+          recorderRef.current.ondataavailable = e => {
             if (e.data.size > 0) {
-              setChunks((prev) => [...prev, e.data]);
+              setChunks(prev => [...prev, e.data]);
             } else {
               // Empty chunk received, so we request new data after a short timeout
               setTimeout(() => {
@@ -148,9 +146,9 @@ function App() {
             setRecording(false);
           };
         })
-        .catch((err) => console.error("The following error occurred: ", err));
+        .catch(err => console.error('The following error occurred: ', err));
     } else {
-      console.error("getUserMedia not supported on your browser!");
+      console.error('getUserMedia not supported on your browser!');
     }
 
     return () => {
@@ -163,7 +161,7 @@ function App() {
     if (!recorderRef.current) return;
     if (!recording) return;
     if (isProcessing) return;
-    if (status !== "ready") return;
+    if (status !== 'ready') return;
 
     if (chunks.length > 0) {
       // Generate from data
@@ -173,8 +171,7 @@ function App() {
 
       fileReader.onloadend = async () => {
         const arrayBuffer = fileReader.result;
-        const decoded =
-          await audioContextRef.current.decodeAudioData(arrayBuffer);
+        const decoded = await audioContextRef.current.decodeAudioData(arrayBuffer);
         let audio = decoded.getChannelData(0);
         if (audio.length > MAX_SAMPLES) {
           // Get last MAX_SAMPLES
@@ -182,7 +179,7 @@ function App() {
         }
 
         worker.current.postMessage({
-          type: "generate",
+          type: 'generate',
           data: { audio, language },
         });
       };
@@ -197,12 +194,7 @@ function App() {
       {
         <div className="h-full overflow-auto scrollbar-thin flex justify-center items-center flex-col relative">
           <div className="flex flex-col items-center mb-1 max-w-[400px] text-center">
-            <img
-              src="public/logo.png"
-              width="50%"
-              height="auto"
-              className="block"
-            ></img>
+            <img src="public/logo.png" width="50%" height="auto" className="block"></img>
             <br />
             <h1 className="text-4xl font-bold mb-1">ClearCall</h1>
             <br />
@@ -219,8 +211,8 @@ function App() {
                 <button
                   className="border px-4 py-2 rounded-lg bg-blue-400 text-white hover:bg-blue-500 disabled:bg-blue-100 disabled:cursor-not-allowed select-none"
                   onClick={() => {
-                    worker.current.postMessage({ type: "load" });
-                    setStatus("loading");
+                    worker.current.postMessage({ type: 'load' });
+                    setStatus('loading');
                   }}
                   disabled={status !== null}
                 >
@@ -231,27 +223,25 @@ function App() {
 
             <div className="w-[500px] p-2">
               <AudioVisualizer className="w-full rounded-lg" stream={stream} />
-              {status === "ready" && (
+              {status === 'ready' && (
                 <>
                   <div className="relative">
                     <p className="w-full h-[80px] overflow-y-auto overflow-wrap-anywhere border rounded-lg p-2">
                       {text}
                     </p>
                     {tps && (
-                      <span className="absolute bottom-0 right-0 px-1">
-                        {tps.toFixed(2)} tok/s
-                      </span>
+                      <span className="absolute bottom-0 right-0 px-1">{tps.toFixed(2)} tok/s</span>
                     )}
                   </div>
                   <TextAnalyzer text={text} />
                 </>
               )}
             </div>
-            {status === "ready" && (
+            {status === 'ready' && (
               <div className="relative w-full flex justify-center">
                 <LanguageSelector
                   language={language}
-                  setLanguage={(e) => {
+                  setLanguage={e => {
                     recorderRef.current?.stop();
                     setLanguage(e);
                     recorderRef.current?.start();
@@ -268,16 +258,11 @@ function App() {
                 </button>
               </div>
             )}
-            {status === "loading" && (
+            {status === 'loading' && (
               <div className="w-full max-w-[500px] text-left mx-auto p-4">
                 <p className="text-center">{loadingMessage}</p>
                 {progressItems.map(({ file, progress, total }, i) => (
-                  <Progress
-                    key={i}
-                    text={file}
-                    percentage={progress}
-                    total={total}
-                  />
+                  <Progress key={i} text={file} percentage={progress} total={total} />
                 ))}
               </div>
             )}

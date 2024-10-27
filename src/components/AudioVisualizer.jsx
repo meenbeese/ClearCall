@@ -1,18 +1,17 @@
-import { useRef, useCallback, useEffect } from "react";
+import { useRef, useCallback, useEffect } from 'react';
 
 export function AudioVisualizer({ stream, ...props }) {
   const canvasRef = useRef(null);
 
-  const visualize = useCallback((stream) => {
-    const audioContext = new (window.AudioContext ||
-      window.webkitAudioContext)();
+  const visualize = useCallback(stream => {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     const source = audioContext.createMediaStreamSource(stream);
     const analyser = audioContext.createAnalyser();
     analyser.fftSize = 2048;
     source.connect(analyser);
 
     const canvas = canvasRef.current;
-    const canvasCtx = canvas.getContext("2d");
+    const canvasCtx = canvas.getContext('2d');
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
 
@@ -20,11 +19,11 @@ export function AudioVisualizer({ stream, ...props }) {
       requestAnimationFrame(drawVisual);
       analyser.getByteTimeDomainData(dataArray);
 
-      canvasCtx.fillStyle = "rgb(255, 255, 255)";
+      canvasCtx.fillStyle = 'rgb(255, 255, 255)';
       canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
 
       canvasCtx.lineWidth = 2;
-      canvasCtx.strokeStyle = "rgb(0, 0, 0)";
+      canvasCtx.strokeStyle = 'rgb(0, 0, 0)';
       canvasCtx.beginPath();
 
       const sliceWidth = (canvas.width * 1.0) / bufferLength;
