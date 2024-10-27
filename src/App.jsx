@@ -24,17 +24,18 @@ function App() {
   const [stream, setStream] = useState(null);
   const audioContextRef = useRef(null);
   const [analyzedText, setAnalyzedText] = useState('');
+  const [result, setResult] = useState('');
 
-  let intervalId; // Declare intervalId here
+  let intervalId;
 
   useEffect(() => {
     intervalId = setInterval(() => {
       if (status === 'ready') {
-        setAnalyzedText(text); // Update the text to be analyzed
+        setAnalyzedText(text);
       }
     }, 10000);
 
-    return () => clearInterval(intervalId); // Cleanup on unmount
+    return () => clearInterval(intervalId);
   }, [status, text]);
 
   useEffect(() => {
@@ -51,8 +52,7 @@ function App() {
 
         const data = await response.json();
         console.log('Received analysis:', data);
-        // Assuming you have a state for analysis result
-        // setAnalysis(data.result);
+        setResult(data.result || 'No result');
       }
     };
 
@@ -287,6 +287,12 @@ function App() {
             </div>
           )}
         </div>
+        {status === 'ready' && (
+          <div className="w-full max-w-[500px] mx-auto p-6">
+            <h2 className="text-xl font-semibold mb-2">Result:</h2>
+            <p className="border rounded-lg p-4">{`Result: ${result}`}</p>
+          </div>
+        )}
       </div>
     </div>
   );

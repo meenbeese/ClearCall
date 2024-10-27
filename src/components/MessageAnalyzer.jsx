@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
@@ -6,7 +6,7 @@ const openai = new OpenAI({
   dangerouslyAllowBrowser: true,
 });
 
-export const MessageAnalyzer = ({ message }) => {
+export const MessageAnalyzer = message => {
   const [responseText, setResponseText] = useState('');
 
   const fetchResponse = async () => {
@@ -42,11 +42,5 @@ export const MessageAnalyzer = ({ message }) => {
     return () => clearInterval(intervalId);
   }, [message]);
 
-  return (
-    <div>
-      <div className="border rounded p-2 w-full" style={{ minHeight: '200px' }}>
-        {responseText}
-      </div>
-    </div>
-  );
+  return responseText;
 };
