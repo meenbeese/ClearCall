@@ -190,7 +190,7 @@ function App() {
         <div className="h-full overflow-auto scrollbar-thin flex justify-center items-center flex-col relative">
           <div className="flex flex-col items-center mb-1 max-w-[400px] text-center">
             <img src="logo.png" width="50%" height="auto" className="block"></img>
-            <h1 className="text-4xl font-bold mb-1">VeriVoice</h1>
+            <h1 className="text-4xl font-bold mb-1 mt-2">VeriVoice</h1>
             <h2 className="text-xl font-semibold">Real-time in-browser speech recognition</h2>
           </div>
 
