@@ -198,7 +198,7 @@ function App() {
         <div className="h-full overflow-auto scrollbar-thin flex justify-center items-center flex-col relative">
           <div className="flex flex-col items-center mb-1 max-w-[400px] text-center">
             <img
-              src="logo.png"
+              src="public/logo.png"
               width="50%"
               height="auto"
               className="block"
