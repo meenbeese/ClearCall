@@ -184,7 +184,17 @@ function App() {
     }
   }, [status, recording, isProcessing, chunks, language]);
 
-  return IS_WEBGPU_AVAILABLE ? (
+  if (!IS_WEBGPU_AVAILABLE) {
+    return (
+      <div className="fixed w-screen h-screen bg-black z-10 bg-opacity-[92%] text-white text-2xl font-semibold flex justify-center items-center text-center">
+        WebGPU is not supported
+        <br />
+        by this browser :&#40;
+      </div>
+    );
+  }
+
+  return (
     <div className="flex flex-col h-screen mx-auto justify-end text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-900">
       {
         <div className="h-full overflow-auto scrollbar-thin flex justify-center items-center flex-col relative">
@@ -284,12 +294,6 @@ function App() {
           </div>
         </div>
       }
-    </div>
-  ) : (
-    <div className="fixed w-screen h-screen bg-black z-10 bg-opacity-[92%] text-white text-2xl font-semibold flex justify-center items-center text-center">
-      WebGPU is not supported
-      <br />
-      by this browser :&#40;
     </div>
   );
 }
