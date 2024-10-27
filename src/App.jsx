@@ -199,7 +199,7 @@ function App() {
       <div className="h-full overflow-auto scrollbar-thin flex justify-center items-center flex-col relative">
         <div className="flex flex-col items-center mb-6 max-w-[400px] text-center">
           <img src="logo.png" width="50%" height="auto" className="block mb-4"></img>
-          <h1 className="text-4xl font-bold mb-2">VeriVoice</h1>
+          <h1 className="text-4xl font-bold mb-2">ClearCall</h1>
           <h2 className="text-xl font-semibold">Real-time in-browser speech recognition</h2>
         </div>
 
@@ -252,7 +252,7 @@ function App() {
             <AudioVisualizer className="w-full rounded-lg mb-4" stream={stream} />
             {status === 'ready' && (
               <div className="relative mb-4">
-                <p className="w-full h-[80px] overflow-y-auto overflow-wrap-anywhere border rounded-lg p-3">
+                <p className="w-full h-[120px] overflow-y-auto overflow-wrap-anywhere border rounded-lg p-4">
                   {text}
                 </p>
                 {tps && (
@@ -262,7 +262,7 @@ function App() {
             )}
           </div>
           {status === 'ready' && (
-            <div className="relative w-full flex px-4 mb-6 absolute left-2">
+            <div className="relative w-full flex justify-between px-4 mb-6 gap-4">
               <LanguageSelector
                 language={language}
                 setLanguage={e => {
@@ -270,9 +270,10 @@ function App() {
                   setLanguage(e);
                   recorderRef.current?.start();
                 }}
+                className="border hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
               />
               <button
-                className="border rounded-lg px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 absolute right-2"
+                className="border rounded-lg px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800"
                 onClick={() => {
                   recorderRef.current?.stop();
                   recorderRef.current?.start();
