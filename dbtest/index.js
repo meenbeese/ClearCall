@@ -1,8 +1,11 @@
 import mongoose from 'mongoose'
 import { logCall } from './model/Call.js';
 import { returnCall } from './model/Call.js';
+import 'dotenv/config';
 
-mongoose.connect("mongodb+srv://emailrpau:e58MqpSfT3UOBsBJ@cluster0.xkxfl.mongodb.net/myFirstDatabase?retryWrites=true&w=majority")
+const srv = process.env.MONGO_SRV
+
+mongoose.connect(`${process.env.MONGO_SRV}`)
 let check = logCall(2, 18002672001);
   // Find a single blog post
 

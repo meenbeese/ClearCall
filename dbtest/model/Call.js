@@ -37,10 +37,10 @@ export async function logCall(currentUserId, phoneNumber){
   const llmcontent = readFileSync('./llmoutput.txt').toString();
   if (llmcontent === ""){
     suspicious = false;
-  }
+  };
 
 
-  // Create a new blog post object
+  // Create a new call object
   const article = new Call({
       transcript: transcontent,
       llmoutput: llmcontent,
