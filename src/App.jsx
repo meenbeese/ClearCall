@@ -189,92 +189,94 @@ function App() {
     }
   }, [status, recording, isProcessing, chunks, language]);
 
-  return IS_WEBGPU_AVAILABLE ? (
-    <div className="flex flex-col h-screen mx-auto justify-end text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-900">
-      {
-        <div className="h-full overflow-auto scrollbar-thin flex justify-center items-center flex-col relative">
-          <div className="flex flex-col items-center mb-1 max-w-[400px] text-center">
-            <img src="public/logo.png" width="50%" height="auto" className="block"></img>
-            <br />
-            <h1 className="text-4xl font-bold mb-1">ClearCall</h1>
-            <br />
-            <h2 className="text-xl font-semibold">
-              Real-time in-browser voice monitoring and protection
-            </h2>
-            <br />
-          </div>
-          <TextAnalyzer text={text} />
+  if (!IS_WEBGPU_AVAILABLE) {
+    return (
+      <div className="fixed w-screen h-screen bg-black z-10 bg-opacity-[92%] text-white text-2xl font-semibold flex justify-center items-center text-center">
+        WebGPU is not supported
+        <br />
+        by this browser :&#40;
+      </div>
+    );
+  }
 
-          <div className="flex flex-col items-center px-4">
-            {status === null && (
+  return (
+    <div className="flex flex-col h-screen mx-auto justify-end text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-900">
+      <div className="h-full overflow-auto scrollbar-thin flex justify-center items-center flex-col relative">
+        <div className="flex flex-col items-center mb-1 max-w-[400px] text-center">
+          <img src="logo.png" width="50%" height="auto" className="block"></img>
+          <br />
+          <h1 className="text-4xl font-bold mb-1">ClearCall</h1>
+          <br />
+          <h2 className="text-xl font-semibold">
+            Real-time in-browser voice monitoring and protection
+          </h2>
+          <br />
+        </div>
+        <TextAnalyzer text={text} />
+
+        <div className="flex flex-col items-center px-4">
+          {status === null && (
+            <>
+              <button
+                className="border px-4 py-2 rounded-lg bg-blue-400 text-white hover:bg-blue-500 disabled:bg-blue-100 disabled:cursor-not-allowed select-none"
+                onClick={() => {
+                  worker.current.postMessage({ type: 'load' });
+                  setStatus('loading');
+                }}
+                disabled={status !== null}
+              >
+                Load model
+              </button>
+            </>
+          )}
+
+          <div className="w-[500px] p-2">
+            <AudioVisualizer className="w-full rounded-lg" stream={stream} />
+            {status === 'ready' && (
               <>
-                <button
-                  className="border px-4 py-2 rounded-lg bg-blue-400 text-white hover:bg-blue-500 disabled:bg-blue-100 disabled:cursor-not-allowed select-none"
-                  onClick={() => {
-                    worker.current.postMessage({ type: 'load' });
-                    setStatus('loading');
-                  }}
-                  disabled={status !== null}
-                >
-                  Load model
-                </button>
+                <div className="relative">
+                  <p className="w-full h-[80px] overflow-y-auto overflow-wrap-anywhere border rounded-lg p-2">
+                    {text}
+                  </p>
+                  {tps && (
+                    <span className="absolute bottom-0 right-0 px-1">{tps.toFixed(2)} tok/s</span>
+                  )}
+                </div>
+                <TextAnalyzer text={text} />
               </>
             )}
-
-            <div className="w-[500px] p-2">
-              <AudioVisualizer className="w-full rounded-lg" stream={stream} />
-              {status === 'ready' && (
-                <>
-                  <div className="relative">
-                    <p className="w-full h-[80px] overflow-y-auto overflow-wrap-anywhere border rounded-lg p-2">
-                      {text}
-                    </p>
-                    {tps && (
-                      <span className="absolute bottom-0 right-0 px-1">{tps.toFixed(2)} tok/s</span>
-                    )}
-                  </div>
-                  <TextAnalyzer text={text} />
-                </>
-              )}
-            </div>
-            {status === 'ready' && (
-              <div className="relative w-full flex justify-center">
-                <LanguageSelector
-                  language={language}
-                  setLanguage={e => {
-                    recorderRef.current?.stop();
-                    setLanguage(e);
-                    recorderRef.current?.start();
-                  }}
-                />
-                <button
-                  className="border rounded-lg px-2 absolute right-2"
-                  onClick={() => {
-                    recorderRef.current?.stop();
-                    recorderRef.current?.start();
-                  }}
-                >
-                  Reset
-                </button>
-              </div>
-            )}
-            {status === 'loading' && (
-              <div className="w-full max-w-[500px] text-left mx-auto p-4">
-                <p className="text-center">{loadingMessage}</p>
-                {progressItems.map(({ file, progress, total }, i) => (
-                  <Progress key={i} text={file} percentage={progress} total={total} />
-                ))}
-              </div>
-            )}
           </div>
+          {status === 'ready' && (
+            <div className="relative w-full flex justify-center">
+              <LanguageSelector
+                language={language}
+                setLanguage={e => {
+                  recorderRef.current?.stop();
+                  setLanguage(e);
+                  recorderRef.current?.start();
+                }}
+              />
+              <button
+                className="border rounded-lg px-2 absolute right-2"
+                onClick={() => {
+                  recorderRef.current?.stop();
+                  recorderRef.current?.start();
+                }}
+              >
+                Reset
+              </button>
+            </div>
+          )}
+          {status === 'loading' && (
+            <div className="w-full max-w-[500px] text-left mx-auto p-4">
+              <p className="text-center">{loadingMessage}</p>
+              {progressItems.map(({ file, progress, total }, i) => (
+                <Progress key={i} text={file} percentage={progress} total={total} />
+              ))}
+            </div>
+          )}
         </div>
-      }
-    </div>
-  ) : (
-    <div className="fixed w-screen h-screen bg-black z-10 bg-opacity-[92%] text-white text-2xl font-semibold flex justify-center items-center text-center">
-      WebGPU is not supported
-      <br />
-      by this browser :&#40;
+      </div>
     </div>
   );
 }
